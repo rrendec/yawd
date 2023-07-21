@@ -1,0 +1,16 @@
+[DEFAULT]
+latitude = 0.000
+longitude = 0.000
+
+[memcache]
+host = localhost
+port = 11211
+prefix = weather
+
+[carbon]
+host = localhost
+port = 2003
+prefix = weather
+
+[openweather]
+appid = 00000000000000000000000000000000
