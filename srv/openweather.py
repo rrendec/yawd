@@ -2,6 +2,7 @@ import requests
 import json
 
 import gas
+import epaaqi
 
 BASE_URL = 'https://api.openweathermap.org'
 
@@ -29,10 +30,6 @@ class AirPollution(LocalizedApi):
     gas_aqi_scale = {'o3': 1000, 'pm2_5': 1, 'pm10': 1, 'co': 1000, 'so2': 1, 'no2': 1}
 
     @staticmethod
-    def aqi(name, value):
-        return 0
-
-    @staticmethod
     def normalize(data, temp_c, pres_pa):
         # All our input data (from the OpenWeather API) uses ug/m^3, and
         # gas.to_ppm() expects mg/m^3, so we get back ppb instead of ppm.
@@ -41,11 +38,14 @@ class AirPollution(LocalizedApi):
         aqi = {k: v / AirPollution.gas_aqi_scale[k] if k.startswith('pm')
                else gas.to_ppm(k, v / AirPollution.gas_aqi_scale[k], temp_c, pres_pa)
                for k, v in data['components'].items() if k in AirPollution.gas_aqi_scale}
-        aqi = {k: AirPollution.aqi(k, v) for k, v in aqi.items()}
+        aqi = {
+            'o3-8': epaaqi.aqi('o3-8', aqi['o3']),
+            'o3-1': epaaqi.aqi('o3-1', aqi['o3']),
+        } | {k: epaaqi.aqi(k, v) for k, v in aqi.items() if k != 'o3'}
 
         return {
             'aql': data['main']['aqi'],
-            'aqi': max(aqi.values()),
+            'aqi': max([v for v in aqi.values() if v is not None]),
             'cmass': data['components'],
             'cvol': ppb,
             'caqi': aqi,
@@ -73,4 +73,5 @@ class AirPollutionCurrent(AirPollution):
             'cvol.%s %f %d' % (k, v, self.data['dt']) for k, v in self.data['cvol'].items()
         ] + [
             'caqi.%s %d %d' % (k, v, self.data['dt']) for k, v in self.data['caqi'].items()
+            if v is not None
         ]
