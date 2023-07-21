@@ -66,12 +66,12 @@ class AirPollutionCurrent(AirPollution):
 
     def to_carbon_text(self):
         return [
-            '%s %d %d' % (k, self.data[k], self.data['dt']) for k in ['aql', 'aqi']
+            '{} {} {}'.format(k, self.data[k], self.data['dt']) for k in ['aql', 'aqi']
         ] + [
-            'cmass.%s %f %d' % (k, v, self.data['dt']) for k, v in self.data['cmass'].items()
+            'cmass.{} {} {}'.format(k, v, self.data['dt']) for k, v in self.data['cmass'].items()
         ] + [
-            'cvol.%s %f %d' % (k, v, self.data['dt']) for k, v in self.data['cvol'].items()
+            'cvol.{} {} {}'.format(k, v, self.data['dt']) for k, v in self.data['cvol'].items()
         ] + [
-            'caqi.%s %d %d' % (k, v, self.data['dt']) for k, v in self.data['caqi'].items()
+            'caqi.{} {} {}'.format(k, v, self.data['dt']) for k, v in self.data['caqi'].items()
             if v is not None
         ]
