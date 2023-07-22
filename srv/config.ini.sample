@@ -1,6 +1,7 @@
 [DEFAULT]
 latitude = 0.000
 longitude = 0.000
+altitude = 100
 
 [memcache]
 host = localhost

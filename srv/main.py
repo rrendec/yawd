@@ -11,18 +11,27 @@ def main():
     conf = configparser.ConfigParser()
     conf.read('config.ini')
 
+    w = openweather.WeatherCurrent(
+        conf['openweather']['appid'],
+        conf['DEFAULT']['latitude'],
+        conf['DEFAULT']['longitude']
+    )
+    w.update(int(conf['DEFAULT']['altitude']))
+
     ap = openweather.AirPollutionCurrent(
         conf['openweather']['appid'],
         conf['DEFAULT']['latitude'],
         conf['DEFAULT']['longitude']
     )
-    ap.update()
+    ap.update(w.data['main']['temp'])
 
     mc = memcache.Client(['{}:{}'.format(
         conf['memcache']['host'],
         conf['memcache']['port']
     )], debug=0)
 
+    mc.set(conf['memcache']['prefix'] + '.openweather.current.weather',
+           w.to_json())
     mc.set(conf['memcache']['prefix'] + '.openweather.current.airquality',
            ap.to_json())
 
@@ -30,6 +39,8 @@ def main():
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((conf['carbon']['host'], int(conf['carbon']['port'])))
+    sock.sendall(carbon_pack(conf['carbon']['prefix'] + '.openweather.weather',
+                             w.to_carbon_text()))
     sock.sendall(carbon_pack(conf['carbon']['prefix'] + '.openweather.airquality',
                              ap.to_carbon_text()))
     sock.close()
