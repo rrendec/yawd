@@ -11,7 +11,7 @@ class BaseApi:
         self.appid = appid
 
     def get_url_query(self):
-        return 'appid=%s' % self.appid
+        return 'appid=' + self.appid
 
 class LocalizedApi(BaseApi):
     def __init__(self, appid, lat, lon):
@@ -21,7 +21,7 @@ class LocalizedApi(BaseApi):
 
     def get_url_query(self):
         return '&'.join((
-            'lat=%s&lon=%s' % (self.lat, self.lon),
+            'lat={}&lon={}'.format(self.lat, self.lon),
             super().get_url_query()
         ))
 
