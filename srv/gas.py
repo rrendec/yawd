@@ -1,3 +1,5 @@
+import math
+
 # Higher precision molecular weight data from:
 # NIST Chemistry WebBook
 # https://webbook.nist.gov/chemistry/
@@ -45,6 +47,25 @@ def to_ppm(chem, cntr_mg_m3, temp_c=STD_TEMP_C, pres_pa=STD_PRES_PA):
     m = molecular_weight[chem]
     return 8314.510 * (temp_c + C_TO_K) * cntr_mg_m3 / (m * pres_pa)
 
+# Conversion formulas from:
+# https://www.omnicalculator.com/physics/air-pressure-at-altitude
+#           -g M (h - h0)
+#           -------------
+# P = P0 e     RT
+#
+# h = altitude at which we calculate the pressure   [m]
+# P = air pressure at altitude h
+# P0 = the pressure at the reference level h0
+# T = temperature at altitude h                     [K]
+# g = gravitational acceleration = 9.80665          [m/s^2]
+# M = the molar mass of air = 0.0289644             [kg/mol]
+# R = universal gas constant = 8.31432              [N*m/(mol*K)]
+#
+# Since the reference presure level is the sea level, h0 = 0.
+def air_pressure(pres_sea, temp_c, altitude_m):
+    return pres_sea * math.exp(-0.034163195 * altitude_m / (temp_c + C_TO_K))
+
 if __name__ == '__main__':
     print(to_ppm('co', 0.4))
     print(to_ppm('co', 0.4, 0, BAR_TO_PA))
+    print(air_pressure(1013, 25, 100))
