@@ -2,7 +2,7 @@ import requests
 import json
 
 import gas
-import epaaqi
+import epa
 
 BASE_URL = 'https://api.openweathermap.org'
 
@@ -85,9 +85,9 @@ class AirPollution(LocalizedApi):
                else gas.to_ppm(k, v / AirPollution.gas_aqi_scale[k], temp_c, pres_pa)
                for k, v in data['components'].items() if k in AirPollution.gas_aqi_scale}
         aqi = {
-            'o3-8': epaaqi.aqi('o3-8', aqi['o3']),
-            'o3-1': epaaqi.aqi('o3-1', aqi['o3']),
-        } | {k: epaaqi.aqi(k, v) for k, v in aqi.items() if k != 'o3'}
+            'o3-8': epa.aqi('o3-8', aqi['o3']),
+            'o3-1': epa.aqi('o3-1', aqi['o3']),
+        } | {k: epa.aqi(k, v) for k, v in aqi.items() if k != 'o3'}
 
         return {
             'aql': data['main']['aqi'],
