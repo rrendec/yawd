@@ -56,6 +56,10 @@ class Weather(LocalizedApi):
         return data
 
 class WeatherCurrent(Weather):
+    def __init__(self, appid, lat, lon, prefix='openweather.weather'):
+        super().__init__(appid, lat, lon)
+        self.prefix = prefix
+
     def update(self, altitude_m=0):
         url = BASE_URL + '/data/2.5/weather?' + self.get_url_query()
         res = requests.get(url)
@@ -64,13 +68,16 @@ class WeatherCurrent(Weather):
         del self.data['coord']
 
     def to_carbon_text(self):
-        return ['{} {} {}'.format(unit, value, self.data['dt']) for unit, value in [
-            ('id', self.data['weather'][0]['id']),
-        ] + list(self.data['main'].items()) + [
-            ('visibility', self.data['visibility']),
-            ('wind.speed', self.data['wind']['speed']),
-            ('wind.deg', self.data['wind']['deg']),
-        ]]
+        return [
+            '{} {} {}'.format(self.prefix + '.' + unit, value, self.data['dt'])
+            for unit, value in [
+                ('id', self.data['weather'][0]['id']),
+            ] + list(self.data['main'].items()) + [
+                ('visibility', self.data['visibility']),
+                ('wind.speed', self.data['wind']['speed']),
+                ('wind.deg', self.data['wind']['deg']),
+            ]
+        ]
 
 class AirPollution(LocalizedApi):
     components = ['co', 'no', 'no2', 'o3', 'so2', 'pm2_5', 'pm10', 'nh3']
@@ -104,6 +111,9 @@ class AirPollution(LocalizedApi):
         }
 
 class AirPollutionCurrent(AirPollution):
+    def __init__(self, appid, lat, lon, prefix='openweather.airquality'):
+        super().__init__(appid, lat, lon)
+        self.prefix = prefix
 
     def update(self, temp_c=gas.STD_TEMP_C, pres_pa=gas.STD_PRES_PA):
         url = BASE_URL + '/data/2.5/air_pollution?' + self.get_url_query()
@@ -116,6 +126,7 @@ class AirPollutionCurrent(AirPollution):
         data = util.flatten(self.data)
         del data['dt']
         return [
-            '{} {} {}'.format(k, v, self.data['dt']) for k, v in data.items()
+            '{} {} {}'.format(self.prefix + '.' + k, v, self.data['dt'])
+            for k, v in data.items()
             if v is not None
         ]

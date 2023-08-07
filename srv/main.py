@@ -39,10 +39,8 @@ def main():
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((conf['carbon']['host'], int(conf['carbon']['port'])))
-    sock.sendall(carbon_pack(conf['carbon']['prefix'] + '.openweather.weather',
-                             w.to_carbon_text()))
-    sock.sendall(carbon_pack(conf['carbon']['prefix'] + '.openweather.airquality',
-                             ap.to_carbon_text()))
+    sock.sendall(carbon_pack(conf['carbon']['prefix'], w.to_carbon_text()))
+    sock.sendall(carbon_pack(conf['carbon']['prefix'], ap.to_carbon_text()))
     sock.close()
 
 if __name__ == '__main__':
