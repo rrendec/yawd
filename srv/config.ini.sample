@@ -15,3 +15,8 @@ prefix = outdoor
 
 [openweather]
 appid = 00000000000000000000000000000000
+
+[waqi]
+city =
+stations =
+token = 0000000000000000000000000000000000000000
