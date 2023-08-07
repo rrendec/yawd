@@ -8,3 +8,9 @@ def _flatten(d, pk, sep):
 
 def flatten(d, pk='', sep='.'):
     return dict(_flatten(d, pk, sep))
+
+def remap(d, md):
+    return {
+        md[k] if k in md else k: v
+        for k, v in d.items()
+    }

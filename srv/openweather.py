@@ -37,6 +37,7 @@ class Weather(LocalizedApi):
     def normalize(data, altitude_m):
         data = data.copy()
 
+        data['main'] = util.remap(data['main'], {'temp': 'temperature'})
         data['main']['pressure'] *= 100
 
         if 'sea_level' in data['main']:
@@ -49,7 +50,7 @@ class Weather(LocalizedApi):
         else:
             data['main']['grnd_level'] = round(gas.air_pressure(
                 data['main']['sea_level'],
-                data['main']['temp'],
+                data['main']['temperature'],
                 altitude_m
             ) / 100) * 100
 

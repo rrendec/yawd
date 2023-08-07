@@ -23,7 +23,7 @@ def main():
         conf['DEFAULT']['latitude'],
         conf['DEFAULT']['longitude']
     )
-    ap.update(w.data['main']['temp'])
+    ap.update(w.data['main']['temperature'])
 
     mc = memcache.Client(['{}:{}'.format(
         conf['memcache']['host'],
