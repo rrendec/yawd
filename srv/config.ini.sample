@@ -6,12 +6,12 @@ altitude = 100
 [memcache]
 host = localhost
 port = 11211
-prefix = weather
+prefix = outdoor
 
 [carbon]
 host = localhost
 port = 2003
-prefix = weather
+prefix = outdoor
 
 [openweather]
 appid = 00000000000000000000000000000000
