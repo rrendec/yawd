@@ -3,6 +3,7 @@ import json
 
 import gas
 import epa
+import util
 
 BASE_URL = 'https://api.openweathermap.org'
 
@@ -81,20 +82,24 @@ class AirPollution(LocalizedApi):
         # gas.to_ppm() expects mg/m^3, so we get back ppb instead of ppm.
         ppb = {k: gas.to_ppm(k, v, temp_c, pres_pa)
                for k, v in data['components'].items() if k in gas.molecular_weight}
-        aqi = {k: v / AirPollution.gas_aqi_scale[k] if k.startswith('pm')
+        epa_aqi_in = {k: v / AirPollution.gas_aqi_scale[k] if k.startswith('pm')
                else gas.to_ppm(k, v / AirPollution.gas_aqi_scale[k], temp_c, pres_pa)
                for k, v in data['components'].items() if k in AirPollution.gas_aqi_scale}
-        aqi = {
-            'o3-8': epa.aqi('o3-8', aqi['o3']),
-            'o3-1': epa.aqi('o3-1', aqi['o3']),
-        } | {k: epa.aqi(k, v) for k, v in aqi.items() if k != 'o3'}
+        epa_aqi_out = {
+            'o3-8': epa.aqi('o3-8', epa_aqi_in['o3']),
+            'o3-1': epa.aqi('o3-1', epa_aqi_in['o3']),
+        } | {k: epa.aqi(k, v) for k, v in epa_aqi_in.items() if k != 'o3'}
 
         return {
-            'aql': data['main']['aqi'],
-            'aqi': max([v for v in aqi.values() if v is not None]),
+            'aqi': {
+                'epa': max([v for v in epa_aqi_out.values() if v is not None]),
+                'openweather': data['main']['aqi'],
+            },
             'cmass': data['components'],
             'cvol': ppb,
-            'caqi': aqi,
+            'caqi': {
+                'epa': epa_aqi_out,
+            },
             'dt': data['dt']
         }
 
@@ -108,13 +113,9 @@ class AirPollutionCurrent(AirPollution):
                                            temp_c, pres_pa)
 
     def to_carbon_text(self):
+        data = util.flatten(self.data)
+        del data['dt']
         return [
-            '{} {} {}'.format(k, self.data[k], self.data['dt']) for k in ['aql', 'aqi']
-        ] + [
-            'cmass.{} {} {}'.format(k, v, self.data['dt']) for k, v in self.data['cmass'].items()
-        ] + [
-            'cvol.{} {} {}'.format(k, v, self.data['dt']) for k, v in self.data['cvol'].items()
-        ] + [
-            'caqi.{} {} {}'.format(k, v, self.data['dt']) for k, v in self.data['caqi'].items()
+            '{} {} {}'.format(k, v, self.data['dt']) for k, v in data.items()
             if v is not None
         ]
