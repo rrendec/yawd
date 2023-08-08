@@ -1,12 +1,52 @@
 import configparser
 import memcache
 import socket
+import datetime
 
 import openweather
 import waqi
+import util
 
 def carbon_pack(prefix, lines):
     return ('\n'.join([prefix + '.' + s for s in lines]) + '\n').encode()
+
+def aggregate(ds_ow_w, ds_ow_ap, ds_waqi):
+    # This is currently based on mere observation, and specific to the data
+    # sources around my area. It needs to be adapted to use a more generic
+    # algorithm and/or additional configuration data.
+    #   - OpenWeather air quality data is way off; do not use it
+    #   - WAQI city values for temperature, humidity, pressure are good
+    #     but the reporting station is too far away
+    #   - WAQI city values for NO2 and O3 are supposed to be integer
+    #     values, but they are not, so something is odd
+    #   - WAQI station values for temperature and humidity are way off
+    #   - WAQI station values for PM2.5 and PM10 seem to be accurate
+
+    aqi_epa = {}
+    for name in waqi.Feed.aqi_comp_map.values():
+        val = [
+            ds.data['airquality']['caqi']['epa'][name]
+            for ds in ds_waqi
+            if name in ds.data['airquality']['caqi']['epa']
+        ]
+        if val:
+            aqi_epa[name] = round(max(val))
+
+    return {
+        'weather': {
+            'temperature': ds_ow_w.data['main']['temperature'],
+            'humidity': ds_ow_w.data['main']['humidity'],
+            'pressure': ds_ow_w.data['main']['pressure'],
+        },
+        'airquality': {
+            'aqi': {
+                'epa': max(aqi_epa.values())
+            },
+            'caqi': {
+                'epa': aqi_epa
+            }
+        }
+    }
 
 def main():
     conf = configparser.ConfigParser()
@@ -33,6 +73,9 @@ def main():
     for ds in ds_waqi:
         ds.update()
 
+    ag = util.flatten(aggregate(ds_ow_w, ds_ow_ap, ds_waqi))
+    dt = int(datetime.datetime.now().timestamp())
+
     mc = memcache.Client(['{}:{}'.format(
         conf['memcache']['host'],
         conf['memcache']['port']
@@ -44,6 +87,8 @@ def main():
            ds_ow_ap.to_json())
     for ds in ds_waqi:
         mc.set(conf['memcache']['prefix'] + '.' + ds.prefix, ds.to_json())
+    for k, v in ag.items():
+        mc.set(conf['memcache']['prefix'] + '.aggregate.' + k, v)
 
     mc.disconnect_all()
 
@@ -53,6 +98,9 @@ def main():
     sock.sendall(carbon_pack(conf['carbon']['prefix'], ds_ow_ap.to_carbon_text()))
     for ds in ds_waqi:
         sock.sendall(carbon_pack(conf['carbon']['prefix'], ds.to_carbon_text()))
+    sock.sendall(carbon_pack(conf['carbon']['prefix'], [
+        'aggregate.{} {} {}'.format(k, v, dt) for k, v in ag.items()
+    ]))
     sock.close()
 
 if __name__ == '__main__':
