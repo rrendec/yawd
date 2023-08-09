@@ -30,6 +30,7 @@ def aggregate(ds_ow_w, ds_ow_ap, ds_waqi):
             ds.data['airquality']['caqi']['epa'][name]
             for ds in ds_waqi
             if name in ds.data['airquality']['caqi']['epa']
+            and (dt - ds.data['dt']) < 7500
         ]
         if val:
             aqi_epa[name] = round(max(val))
