@@ -2,6 +2,7 @@ import configparser
 import memcache
 import socket
 import datetime
+import json
 
 import openweather
 import waqi
@@ -22,6 +23,7 @@ def aggregate(ds_ow_w, ds_ow_ap, ds_waqi):
     #   - WAQI station values for temperature and humidity are way off
     #   - WAQI station values for PM2.5 and PM10 seem to be accurate
 
+    dt = int(datetime.datetime.now().timestamp())
     aqi_epa = {}
     for name in waqi.Feed.aqi_comp_map.values():
         val = [
@@ -45,7 +47,8 @@ def aggregate(ds_ow_w, ds_ow_ap, ds_waqi):
             'caqi': {
                 'epa': aqi_epa
             }
-        }
+        },
+        'dt': dt
     }
 
 def main():
@@ -73,8 +76,7 @@ def main():
     for ds in ds_waqi:
         ds.update()
 
-    ag = util.flatten(aggregate(ds_ow_w, ds_ow_ap, ds_waqi))
-    dt = int(datetime.datetime.now().timestamp())
+    ag = aggregate(ds_ow_w, ds_ow_ap, ds_waqi)
 
     mc = memcache.Client(['{}:{}'.format(
         conf['memcache']['host'],
@@ -87,8 +89,7 @@ def main():
            ds_ow_ap.to_json())
     for ds in ds_waqi:
         mc.set(conf['memcache']['prefix'] + '.' + ds.prefix, ds.to_json())
-    for k, v in ag.items():
-        mc.set(conf['memcache']['prefix'] + '.aggregate.' + k, v)
+    mc.set(conf['memcache']['prefix'] + '.aggregate', json.dumps(ag))
 
     mc.disconnect_all()
 
@@ -99,7 +100,8 @@ def main():
     for ds in ds_waqi:
         sock.sendall(carbon_pack(conf['carbon']['prefix'], ds.to_carbon_text()))
     sock.sendall(carbon_pack(conf['carbon']['prefix'], [
-        'aggregate.{} {} {}'.format(k, v, dt) for k, v in ag.items()
+        'aggregate.{} {} {}'.format(k, v, ag['dt'])
+        for k, v in util.flatten(ag).items() if k != 'dt'
     ]))
     sock.close()
 
