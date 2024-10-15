@@ -43,7 +43,7 @@ def aggregate(ds_ow_w, ds_ow_ap, ds_waqi):
         },
         'airquality': {
             'aqi': {
-                'epa': max(aqi_epa.values())
+                'epa': max(aqi_epa.values()) if aqi_epa else None
             },
             'caqi': {
                 'epa': aqi_epa
@@ -105,7 +105,7 @@ def main():
         sock.sendall(carbon_pack(conf['carbon']['prefix'], ds.to_carbon_text()))
     sock.sendall(carbon_pack(conf['carbon']['prefix'], [
         'aggregate.{} {} {}'.format(k, v, ag['dt'])
-        for k, v in util.flatten(ag).items() if k != 'dt'
+        for k, v in util.flatten(ag).items() if k != 'dt' and v is not None
     ]))
     sock.close()
 
