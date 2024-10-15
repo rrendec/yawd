@@ -1,13 +1,13 @@
-def _flatten(d, pk, sep):
+def _flatten(d, prefix, glue):
     for k, v in d.items():
-        nk = pk + sep + k if pk else k
+        nk = prefix + glue + k if prefix else k
         if isinstance(v, dict):
-            yield from flatten(v, nk, sep).items()
+            yield from flatten(v, nk, glue).items()
         else:
             yield nk, v
 
-def flatten(d, pk='', sep='.'):
-    return dict(_flatten(d, pk, sep))
+def flatten(d, prefix='', glue='.'):
+    return dict(_flatten(d, prefix, glue))
 
 def remap(d, md):
     return {
