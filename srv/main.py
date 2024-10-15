@@ -70,10 +70,13 @@ def main():
     )
     ds_ow_ap.update(ds_ow_w.data['main']['temperature'])
 
-    ds_waqi = [waqi.CityFeed(conf['waqi']['token'], conf['waqi']['city'])]
-    for token in conf['waqi']['stations'].split(','):
-        station_id = int(token.strip())
-        ds_waqi.append(waqi.StationFeed(conf['waqi']['token'], station_id))
+    ds_waqi = []
+    if 'city' in conf['waqi']:
+        ds_waqi.append(waqi.CityFeed(conf['waqi']['token'], conf['waqi']['city']))
+    if 'stations' in conf['waqi']:
+        for token in conf['waqi']['stations'].split(','):
+            station_id = int(token.strip())
+            ds_waqi.append(waqi.StationFeed(conf['waqi']['token'], station_id))
     for ds in ds_waqi:
         ds.update()
 
