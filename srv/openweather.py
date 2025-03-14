@@ -74,10 +74,11 @@ class WeatherCurrent(Weather):
             for unit, value in [
                 ('id', self.data['weather'][0]['id']),
             ] + list(self.data['main'].items()) + [
-                ('visibility', self.data['visibility']),
+                ('visibility', self.data.get('visibility')),
                 ('wind.speed', self.data['wind']['speed']),
                 ('wind.deg', self.data['wind']['deg']),
             ]
+            if value is not None
         ]
 
 class AirPollution(LocalizedApi):
