@@ -59,14 +59,16 @@ def main():
     ds_ow_w = openweather.WeatherCurrent(
         conf['openweather']['appid'],
         conf['DEFAULT']['latitude'],
-        conf['DEFAULT']['longitude']
+        conf['DEFAULT']['longitude'],
+        conf['openweather']['timeout']
     )
     ds_ow_w.update(int(conf['DEFAULT']['altitude']))
 
     ds_ow_ap = openweather.AirPollutionCurrent(
         conf['openweather']['appid'],
         conf['DEFAULT']['latitude'],
-        conf['DEFAULT']['longitude']
+        conf['DEFAULT']['longitude'],
+        conf['openweather']['timeout']
     )
     ds_ow_ap.update(ds_ow_w.data['main']['temperature'])
 

@@ -18,10 +18,11 @@ class BaseApi:
         return json.dumps(self.data)
 
 class LocalizedApi(BaseApi):
-    def __init__(self, appid, lat, lon):
+    def __init__(self, appid, lat, lon, timeout):
         super().__init__(appid)
         self.lat = lat
         self.lon = lon
+        self.timeout = int(timeout) if timeout else None
 
     def get_url_query(self):
         return '&'.join((
@@ -57,13 +58,13 @@ class Weather(LocalizedApi):
         return data
 
 class WeatherCurrent(Weather):
-    def __init__(self, appid, lat, lon, prefix='openweather.weather'):
-        super().__init__(appid, lat, lon)
+    def __init__(self, appid, lat, lon, timeout, prefix='openweather.weather'):
+        super().__init__(appid, lat, lon, timeout)
         self.prefix = prefix
 
     def update(self, altitude_m=0):
         url = BASE_URL + '/data/2.5/weather?' + self.get_url_query()
-        res = requests.get(url)
+        res = requests.get(url, timeout=self.timeout)
         res.raise_for_status()
         self.data = Weather.normalize(json.loads(res.content), altitude_m)
         del self.data['coord']
@@ -113,13 +114,13 @@ class AirPollution(LocalizedApi):
         }
 
 class AirPollutionCurrent(AirPollution):
-    def __init__(self, appid, lat, lon, prefix='openweather.airquality'):
-        super().__init__(appid, lat, lon)
+    def __init__(self, appid, lat, lon, timeout, prefix='openweather.airquality'):
+        super().__init__(appid, lat, lon, timeout)
         self.prefix = prefix
 
     def update(self, temp_c=gas.STD_TEMP_C, pres_pa=gas.STD_PRES_PA):
         url = BASE_URL + '/data/2.5/air_pollution?' + self.get_url_query()
-        res = requests.get(url)
+        res = requests.get(url, timeout=self.timeout)
         res.raise_for_status()
         self.data = AirPollution.normalize(json.loads(res.content)['list'][0],
                                            temp_c, pres_pa)
